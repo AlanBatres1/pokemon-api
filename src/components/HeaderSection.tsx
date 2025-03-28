@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface HeaderSectionProps {
   onFavoritesClick: () => void;
+  onSearch: (name: string) => void;
 }
 
-const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick }) => {
+const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick, onSearch }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearch = () => {
+    if (searchTerm.trim()) {
+      onSearch(searchTerm.trim());
+    }
+  };
+
   return (
     <header className="bg-[#2B73B9] h-[200px] max-w-full">
       <div className="flex justify-center">
@@ -12,18 +21,25 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick }) => {
       </div>
 
       <div className="flex justify-center mt-4 gap-1">
+        {/* Search Bar */}
         <div className="w-[327px] h-[32px]">
           <label htmlFor="search" className="sr-only">Search</label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <img src="/assets/search.png" className="cursor-pointer" alt="Search Icon" />
+              <img 
+                src="/assets/search.png" 
+                className="cursor-pointer" 
+                alt="Search Icon" 
+                onClick={handleSearch}
+              />
             </div>
             <input
-              type="search"
-              id="search"
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               className="block w-full p-4 pl-10 text-sm text-gray-900 rounded-full bg-gray-50"
               placeholder="Search by name/pokedex number"
-              required
             />
           </div>
         </div>

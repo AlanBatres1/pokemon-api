@@ -1,32 +1,75 @@
 import React from 'react';
 
 interface PokeCardProps {
-  activeModal: 'favorites' | 'moves' | 'evolution' | null;
+  activeModal: "favorites" | "moves" | "evolution" | null;
   onModalClose: () => void;
-  onModalOpen: (modal: 'favorites' | 'moves' | 'evolution') => void;
+  onModalOpen: (modal: "favorites" | "moves" | "evolution") => void;
   isShiny: boolean;
   onShinyToggle: () => void;
+  pokemon: {
+    name: string;
+    id: number;
+    types: string[];
+    abilities: string[];
+    sprites: {
+      other: {
+        "official-artwork": {
+          front_default: string;
+          front_shiny?: string;
+        }
+      }
+    }
+  };
 }
 
-const PokeCard: React.FC<PokeCardProps> = ({ 
-  activeModal, 
-  onModalClose, 
+// Type-to-Color Mapping
+const typeColors: { [key: string]: string } = {
+  fire: '#F08030',
+  water: '#6890F0',
+  grass: '#78C850',
+  electric: '#F8D030',
+  ice: '#98D8D8',
+  fighting: '#C03028',
+  poison: '#A040A0',
+  ground: '#E0C068',
+  flying: '#A890F0',
+  psychic: '#F85888',
+  bug: '#A8B820',
+  rock: '#B8A038',
+  ghost: '#705898',
+  dragon: '#7038F8',
+  dark: '#705848',
+  steel: '#B8B8D0',
+  fairy: '#EE99AC',
+  normal: '#A8A878',
+  default: '#AAB09F'
+};
+
+const PokeCard: React.FC<PokeCardProps> = ({
+  activeModal,
+  onModalClose,
   onModalOpen,
-  isShiny, 
-  onShinyToggle 
+  isShiny,
+  onShinyToggle,
+  pokemon,
 }) => {
+  // Get the primary type color or use default
+  const primaryType = pokemon.types[0]?.toLowerCase() || "default";
+  const bgColor = typeColors[primaryType] || typeColors.default;
+
   return (
     <div className="flex justify-center mt-[25px] md:mt-[50px]">
       <div
         id="pokemonCard"
-        className="bg-fire w-[410px] h-[530px] drop-shadow-xs border-[#4B5563] border-[11px] rounded-[15px] shadow-lg relative overflow-hidden"
+        className="w-[410px] h-[530px] drop-shadow-xs border-[#4B5563] border-[11px] rounded-[15px] shadow-lg relative overflow-hidden transition-transform"
+        style={{ backgroundColor: bgColor }}
       >
         {/* Pokédex Number */}
         <div className="absolute top-4 left-4 bg-[#4B5563] text-white text-sm font-bold px-3 py-1 rounded-full z-10">
-          #004
+          #{pokemon.id.toString().padStart(3, '0')}
         </div>
 
-        {/* Pokemon Image Section */}
+        {/* Pokémon Image Section */}
         <div className="relative flex justify-center">
           <img
             src="/assets/pokeball.png"
@@ -43,18 +86,30 @@ const PokeCard: React.FC<PokeCardProps> = ({
 
         <div className="flex justify-center">
           <img
-            src={isShiny ? "/assets/shiny.png" : "/assets/image.png"} 
-            className="w-[300px] h-[300px] z-10 transition-transform duration-300 ease-in-out"
-            alt="Pokemon"
+            src={
+              isShiny 
+                ? pokemon.sprites.other["official-artwork"].front_shiny || pokemon.sprites.other["official-artwork"].front_default
+                : pokemon.sprites.other["official-artwork"].front_default
+            } 
+            className="w-[300px] h-[300px] z-10 transition-transform duration-300 ease-in-out object-contain"
+            alt={pokemon.name}
           />
         </div>
 
-        {/* Pokemon Info Section */}
+        {/* Pokémon Info Section */}
         <div className="bg-[#F0F0F0] w-full min-h-[210px] rounded-t-[7px] rounded-b-[6px] flex flex-col items-center z-10">
-          <h1 className="text-[18px] font-[Inter] font-bold">Charmander</h1>
+          <h1 className="text-[18px] font-[Inter] font-bold capitalize">{pokemon.name}</h1>
 
           <div className="flex gap-3">
-            <p className="bg-fire rounded-[14px] p-[5px] text-white font-[Inter] font-bold">Fire</p>
+            {pokemon.types.map((type) => (
+              <p 
+                key={type} 
+                className="rounded-[14px] p-[5px] text-white font-[Inter] font-bold capitalize"
+                style={{ backgroundColor: typeColors[type.toLowerCase()] || typeColors.default }}
+              >
+                {type}
+              </p>
+            ))}
           </div>
 
           <div className="flex justify-around w-full mt-3">
@@ -63,8 +118,9 @@ const PokeCard: React.FC<PokeCardProps> = ({
               <p className="text-[10px]">Location</p>
             </div>
             <div className="text-center">
-              <p className="text-[12px]">Blaze</p>
-              <p className="text-[12px]">Solar-Power</p>
+              {pokemon.abilities.slice(0, 2).map((ability) => (
+                <p key={ability} className="text-[12px] capitalize">{ability}</p>
+              ))}
               <p className="text-[10px]">Abilities</p>
             </div>
           </div>
@@ -72,14 +128,16 @@ const PokeCard: React.FC<PokeCardProps> = ({
           <div className="flex flex-col items-center gap-3 ">
             <button
               onClick={() => onModalOpen('moves')}
-              className="bg-fire cursor-pointer text-white rounded-[14px] p-[5px] font-[Inter] font-bold"
+              className="cursor-pointer text-white rounded-[14px] p-[5px] font-[Inter] font-bold"
+              style={{ backgroundColor: bgColor }}
             >
               Moves
             </button>
 
             <button
               onClick={() => onModalOpen('evolution')}
-              className="bg-fire cursor-pointer text-white rounded-[14px] p-[5px] font-[Inter] font-bold"
+              className="cursor-pointer text-white rounded-[14px] p-[5px] font-[Inter] font-bold"
+              style={{ backgroundColor: bgColor }}
             >
               Evolution
             </button>
@@ -89,42 +147,10 @@ const PokeCard: React.FC<PokeCardProps> = ({
         {/* Shiny Image Button */}
         <img
           onClick={onShinyToggle}
-          src="/assets/shinyIcon.png"
-          className="absolute bottom-4 left-4 w-[50px] h-[50px] cursor-pointer z-10"
+          src={isShiny ? "/assets/shinyIconClick.png" : "/assets/shinyIcon.png"}
+          className="absolute bottom-4 left-4 w-[50px] h-[50px] cursor-pointer z-10 transition-transform hover:scale-110"
           alt="Shiny Toggle"
         />
-
-        {/* Modals inside the card */}
-        {activeModal && (
-          <div className="absolute inset-0 bg-[#F0F0F0] rounded-[7px] flex flex-col items-center justify-start p-6 z-20">
-            <div className="w-full flex justify-between items-center border-b pb-2">
-              <h3 className="text-xl font-bold">
-                {activeModal === 'favorites' ? "Favorites" : 
-                 activeModal === 'moves' ? "Moves" : "Evolution"}
-              </h3>
-              <button
-                onClick={onModalClose}
-                className="text-gray-400 hover:text-gray-900"
-              >
-                ✖️
-              </button>
-            </div>
-
-            <div className="mt-4 w-full">
-              {activeModal === 'favorites' && (
-                <p className="text-gray-500">No favorites added yet.</p>
-              )}
-
-              {activeModal === 'moves' && (
-                <p className="text-gray-500">No moves available.</p>
-              )}
-
-              {activeModal === 'evolution' && (
-                <p className="text-gray-500">No evolution data available.</p>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
