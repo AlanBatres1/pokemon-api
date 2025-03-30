@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 interface HeaderSectionProps {
   onFavoritesClick: () => void;
   onSearch: (name: string) => void;
-  onRandomClick: () => void;  // <-- Added Random Button prop
+  onRandomClick: () => void;
 }
 
 const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick, onSearch, onRandomClick }) => {
@@ -50,7 +50,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick, onSearc
           src="/assets/Adobe Express - file.png"
           className="w-[35px] h-[35px] mt-2 cursor-pointer hover:scale-110"
           alt="Random Icon"
-          onClick={onRandomClick}  // <-- Trigger random Pokémon fetch
+          onClick={onRandomClick}
         />
         
         <img

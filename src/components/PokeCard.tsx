@@ -25,6 +25,13 @@ interface PokeCardProps {
   };
 }
 
+interface FavoritePokemon {
+  id: number;
+  name: string;
+  image: string;
+  types: string[];
+}
+
 const typeColors: { [key: string]: string } = {
   fire: '#F08030',
   water: '#6890F0',
@@ -56,8 +63,28 @@ const PokeCard: React.FC<PokeCardProps> = ({
   pokemon,
 }) => {
   const [evolution, setEvolution] = useState<any>(null);
+  const [favorites, setFavorites] = useState<FavoritePokemon[]>([]);
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const primaryType = pokemon.types[0]?.toLowerCase() || "default";
   const bgColor = typeColors[primaryType] || typeColors.default;
+
+  // Load favorites from localStorage on component mount
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem('pokemonFavorites');
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
+    }
+  }, []);
+
+  // Check if current pokemon is in favorites
+  useEffect(() => {
+    const checkIfFavorite = () => {
+      const isFav = favorites.some(fav => fav.id === pokemon.id);
+      setIsFavorite(isFav);
+    };
+    
+    checkIfFavorite();
+  }, [favorites, pokemon.id]);
 
   // Fetch Evolution data
   useEffect(() => {
@@ -77,6 +104,40 @@ const PokeCard: React.FC<PokeCardProps> = ({
       fetchEvolution();
     }
   }, [activeModal, pokemon.species]);
+
+  // Function to handle adding/removing from favorites
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent opening the modal
+    
+    let updatedFavorites: FavoritePokemon[];
+    
+    if (isFavorite) {
+      // Remove from favorites
+      updatedFavorites = favorites.filter(fav => fav.id !== pokemon.id);
+    } else {
+      // Add to favorites
+      const newFavorite: FavoritePokemon = {
+        id: pokemon.id,
+        name: pokemon.name,
+        image: isShiny 
+          ? pokemon.sprites.other["official-artwork"].front_shiny || pokemon.sprites.other["official-artwork"].front_default
+          : pokemon.sprites.other["official-artwork"].front_default,
+        types: pokemon.types
+      };
+      updatedFavorites = [...favorites, newFavorite];
+    }
+    
+    // Update state and localStorage
+    setFavorites(updatedFavorites);
+    localStorage.setItem('pokemonFavorites', JSON.stringify(updatedFavorites));
+  };
+
+  // Function to remove from favorites directly from the list
+  const removeFromFavorites = (id: number) => {
+    const updatedFavorites = favorites.filter(fav => fav.id !== id);
+    setFavorites(updatedFavorites);
+    localStorage.setItem('pokemonFavorites', JSON.stringify(updatedFavorites));
+  };
 
   // Function to render the evolution chain
   const renderEvolutionChain = (chain: any) => {
@@ -111,23 +172,42 @@ const PokeCard: React.FC<PokeCardProps> = ({
         </button>
       </div>
       <hr className="border-gray-300 w-full my-2" />
-      <div className="flex-grow flex flex-col justify-center items-center">
-        <p className="text-center mb-6">Add {pokemon.name} to favorites?</p>
-        <div className="flex gap-4">
-          <button 
-            className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600"
-            onClick={onModalClose}
-          >
-            Add
-          </button>
-          <button 
-            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
-            onClick={onModalClose}
-          >
-            Cancel
-          </button>
+      
+      {favorites.length > 0 ? (
+        <div className="flex-grow overflow-y-auto">
+          {favorites.map((fav) => (
+            <div key={fav.id} className="flex items-center justify-between p-2 border-b">
+              <div className="flex items-center">
+                <img src={fav.image} alt={fav.name} className="w-12 h-12 object-contain" />
+                <div className="ml-3">
+                  <p className="font-bold capitalize">{fav.name}</p>
+                  <div className="flex gap-1">
+                    {fav.types.map((type) => (
+                      <span 
+                        key={`${fav.id}-${type}`}
+                        className="text-xs text-white px-1 rounded capitalize"
+                        style={{ backgroundColor: typeColors[type.toLowerCase()] || typeColors.default }}
+                      >
+                        {type}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <button 
+                className="text-red-500 hover:text-red-700"
+                onClick={() => removeFromFavorites(fav.id)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="flex-grow flex justify-center items-center">
+          <p className="text-center">No favorites yet</p>
+        </div>
+      )}
     </div>
   );
 
@@ -197,10 +277,10 @@ const PokeCard: React.FC<PokeCardProps> = ({
             alt="Pokeball"
           />
           <img
-            src="/assets/gaming.png"
+            src={isFavorite ? "/assets/gaming (1).png" : "/assets/gaming.png"}
             className="w-[40px] h-[40px] absolute top-2 right-2 cursor-pointer z-10 hover:scale-110 drop-shadow-[0_2px_3px_rgba(0,0,0,0.25)]"
             alt="Favorite Icon"
-            onClick={() => onModalOpen('favorites')}
+            onClick={toggleFavorite}
           />
         </div>
 

@@ -33,12 +33,17 @@ export default function Home() {
     setPokemonName(randomId.toString());
   };
 
+  // View favorites list
+  const viewFavorites = () => {
+    handleModalToggle('favorites');
+  };
+
   return (
     <div className="bg-[url(/assets/pokemonBg.png)] bg-no-repeat bg-cover font-[Poppins] bg-fixed bg-center min-h-screen">
       <HeaderSection 
-        onFavoritesClick={() => handleModalToggle('favorites')}
+        onFavoritesClick={viewFavorites}
         onSearch={handleSearch}
-        onRandomClick={handleRandom}  // <-- Pass the random handler
+        onRandomClick={handleRandom}
       />
       {pokemon && (
         <PokeCard 
