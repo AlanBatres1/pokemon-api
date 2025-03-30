@@ -52,6 +52,7 @@ export default function Home() {
           onModalOpen={(modal) => handleModalToggle(modal)}
           isShiny={isShiny}
           onShinyToggle={handleShinyToggle}
+          onSearch={handleSearch}
           pokemon={{
             ...pokemon,
             types: pokemon.types.map((t: any) => t.type.name),

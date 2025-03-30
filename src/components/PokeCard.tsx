@@ -1,28 +1,40 @@
 import React, { useState, useEffect } from 'react';
 
+interface PokemonMove {
+  move: {
+    name: string;
+    url: string;
+  };
+}
+
+interface PokemonSprites {
+  other: {
+    "official-artwork": {
+      front_default: string;
+      front_shiny?: string;
+    }
+  }
+}
+
+interface Pokemon {
+  name: string;
+  id: number;
+  types: string[];
+  abilities: string[];
+  sprites: PokemonSprites;
+  location: string;
+  species: string;
+  moves: PokemonMove[];
+}
+
 interface PokeCardProps {
   activeModal: "favorites" | "moves" | "evolution" | null;
   onModalClose: () => void;
   onModalOpen: (modal: "favorites" | "moves" | "evolution") => void;
   isShiny: boolean;
   onShinyToggle: () => void;
-  pokemon: {
-    name: string;
-    id: number;
-    types: string[];
-    abilities: string[];
-    sprites: {
-      other: {
-        "official-artwork": {
-          front_default: string;
-          front_shiny?: string;
-        }
-      }
-    };
-    location: string;
-    species: string;
-    moves: any[];
-  };
+  onSearch?: (name: string) => void;
+  pokemon: Pokemon;
 }
 
 interface FavoritePokemon {
@@ -60,9 +72,9 @@ const PokeCard: React.FC<PokeCardProps> = ({
   onModalOpen,
   isShiny,
   onShinyToggle,
+  onSearch,
   pokemon,
 }) => {
-  const [evolution, setEvolution] = useState<any>(null);
   const [favorites, setFavorites] = useState<FavoritePokemon[]>([]);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const primaryType = pokemon.types[0]?.toLowerCase() || "default";
@@ -85,25 +97,6 @@ const PokeCard: React.FC<PokeCardProps> = ({
     
     checkIfFavorite();
   }, [favorites, pokemon.id]);
-
-  // Fetch Evolution data
-  useEffect(() => {
-    const fetchEvolution = async () => {
-      try {
-        const speciesRes = await fetch(pokemon.species);
-        const speciesData = await speciesRes.json();
-        const evolutionRes = await fetch(speciesData.evolution_chain.url);
-        const evolutionData = await evolutionRes.json();
-        setEvolution(evolutionData.chain);
-      } catch (error) {
-        console.error('Error fetching evolution data:', error);
-      }
-    };
-    
-    if (activeModal === 'evolution') {
-      fetchEvolution();
-    }
-  }, [activeModal, pokemon.species]);
 
   // Function to handle adding/removing from favorites
   const toggleFavorite = (e: React.MouseEvent) => {
@@ -133,30 +126,19 @@ const PokeCard: React.FC<PokeCardProps> = ({
   };
 
   // Function to remove from favorites directly from the list
-  const removeFromFavorites = (id: number) => {
+  const removeFromFavorites = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation(); 
     const updatedFavorites = favorites.filter(fav => fav.id !== id);
     setFavorites(updatedFavorites);
     localStorage.setItem('pokemonFavorites', JSON.stringify(updatedFavorites));
   };
 
-  // Function to render the evolution chain
-  const renderEvolutionChain = (chain: any) => {
-    if (!chain) return <p>No evolution chain data available.</p>;
-    const evolutions = [];
-    let current = chain;
 
-    while (current) {
-      evolutions.push(current.species.name);
-      current = current.evolves_to[0]; // If there are multiple evolutions, you can expand this logic.
+  const handlePokemonClick = (name: string) => {
+    if (onSearch) {
+      onSearch(name);
+      onModalClose();
     }
-
-    return (
-      <div className="flex justify-center gap-2">
-        {evolutions.map((evolution: string, index: number) => (
-          <p key={index} className="text-lg font-bold capitalize">{evolution}</p>
-        ))}
-      </div>
-    );
   };
 
   // Modal Components
@@ -176,27 +158,20 @@ const PokeCard: React.FC<PokeCardProps> = ({
       {favorites.length > 0 ? (
         <div className="flex-grow overflow-y-auto">
           {favorites.map((fav) => (
-            <div key={fav.id} className="flex items-center justify-between p-2 border-b">
+            <div 
+              key={fav.id} 
+              className="flex items-center justify-between p-2 border-b cursor-pointer hover:bg-gray-100"
+              onClick={() => handlePokemonClick(fav.name)}
+            >
               <div className="flex items-center">
                 <img src={fav.image} alt={fav.name} className="w-12 h-12 object-contain" />
                 <div className="ml-3">
                   <p className="font-bold capitalize">{fav.name}</p>
-                  <div className="flex gap-1">
-                    {fav.types.map((type) => (
-                      <span 
-                        key={`${fav.id}-${type}`}
-                        className="text-xs text-white px-1 rounded capitalize"
-                        style={{ backgroundColor: typeColors[type.toLowerCase()] || typeColors.default }}
-                      >
-                        {type}
-                      </span>
-                    ))}
-                  </div>
                 </div>
               </div>
               <button 
-                className="text-red-500 hover:text-red-700"
-                onClick={() => removeFromFavorites(fav.id)}
+                className="text-red-500 hover:text-red-700 text-2xl"
+                onClick={(e) => removeFromFavorites(e, fav.id)}
               >
                 ×
               </button>
@@ -225,7 +200,7 @@ const PokeCard: React.FC<PokeCardProps> = ({
       <hr className="border-gray-300 w-full my-2" />
       <div className="flex-grow overflow-y-auto">
         <div className="flex flex-wrap gap-2">
-          {pokemon.moves.slice(0, 20).map((move: any, index: number) => (
+          {pokemon.moves.slice(0, 20).map((move: PokemonMove, index: number) => (
             <span key={index} className="capitalize bg-gray-200 px-2 py-1 rounded text-sm">
               {move.move.name}
             </span>
@@ -248,11 +223,7 @@ const PokeCard: React.FC<PokeCardProps> = ({
       </div>
       <hr className="border-gray-300 w-full my-2" />
       <div className="flex-grow flex flex-col justify-center items-center">
-        {evolution ? (
-          renderEvolutionChain(evolution)
-        ) : (
-          <p className="text-center">Loading evolution data...</p>
-        )}
+        <p className="text-center">No evolution data available.</p>
       </div>
     </div>
   );
@@ -350,11 +321,9 @@ const PokeCard: React.FC<PokeCardProps> = ({
         <img
           onClick={onShinyToggle}
           src={isShiny ? "/assets/shinyIconClick.png" : "/assets/shinyIcon.png"}
-          className="absolute bottom-4 left-4 w-[50px] h-[50px] cursor-pointer z-10 transition-transform hover:scale-110 drop-shadow-[0_2px_3px_rgba(0,0,0,0.25)]"
+          className="absolute bottom-4 left-4 w-[50px] h-[50px] cursor-pointer z-10 transition-transform hover:scale-110 drop-shadow-[0,0,0,0.25]"
           alt="Shiny Toggle"
         />
-
-        {/* Modal Rendering - Now taking up the entire card space */}
         {activeModal === 'favorites' && <FavoritesModal />}
         {activeModal === 'moves' && <MovesModal />}
         {activeModal === 'evolution' && <EvolutionModal />}
