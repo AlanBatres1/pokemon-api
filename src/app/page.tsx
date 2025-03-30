@@ -27,11 +27,18 @@ export default function Home() {
     setPokemonName(name);
   };
 
+  // Generate Random Pokémon
+  const handleRandom = () => {
+    const randomId = Math.floor(Math.random() * 1010) + 1;  // Pokémon range: 1-1010
+    setPokemonName(randomId.toString());
+  };
+
   return (
     <div className="bg-[url(/assets/pokemonBg.png)] bg-no-repeat bg-cover font-[Poppins] bg-fixed bg-center min-h-screen">
       <HeaderSection 
         onFavoritesClick={() => handleModalToggle('favorites')}
         onSearch={handleSearch}
+        onRandomClick={handleRandom}  // <-- Pass the random handler
       />
       {pokemon && (
         <PokeCard 

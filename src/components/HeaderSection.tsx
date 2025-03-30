@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 interface HeaderSectionProps {
   onFavoritesClick: () => void;
   onSearch: (name: string) => void;
+  onRandomClick: () => void;  // <-- Added Random Button prop
 }
 
-const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick, onSearch }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick, onSearch, onRandomClick }) => {
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
@@ -28,7 +29,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick, onSearc
             <div className="absolute inset-y-0 left-0 flex items-center pl-3">
               <img 
                 src="/assets/search.png" 
-                className="cursor-pointer" 
+                className="cursor-pointer hover:scale-110" 
                 alt="Search Icon" 
                 onClick={handleSearch}
               />
@@ -44,14 +45,17 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({ onFavoritesClick, onSearc
           </div>
         </div>
 
+        {/* Random Button */}
         <img
           src="/assets/Adobe Express - file.png"
-          className="w-[35px] h-[35px] mt-2 cursor-pointer"
+          className="w-[35px] h-[35px] mt-2 cursor-pointer hover:scale-110"
           alt="Random Icon"
+          onClick={onRandomClick}  // <-- Trigger random Pokémon fetch
         />
+        
         <img
           src="/assets/gaming (1).png"
-          className="w-[35px] h-[35px] mt-2 cursor-pointer"
+          className="w-[35px] h-[35px] mt-2 cursor-pointer hover:scale-110"
           alt="Favorites"
           onClick={onFavoritesClick}
         />
