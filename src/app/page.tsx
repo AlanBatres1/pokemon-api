@@ -29,7 +29,7 @@ export default function Home() {
 
   // Generate Random Pokémon
   const handleRandom = () => {
-    const randomId = Math.floor(Math.random() * 1010) + 1;  // Pokémon range: 1-1010
+    const randomId = Math.floor(Math.random() * 649) + 1;
     setPokemonName(randomId.toString());
   };
 
